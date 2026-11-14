@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    /* Runtime: Node.js 26 (ESM) */
+    "target": "ES2024",
+    "lib": ["ES2024"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+
+    /* Output (used by `npm run build`) */
+    "rootDir": "src",
+    "outDir": "dist",
+    "sourceMap": true,
+
+    /*
+     * Compatible with BOTH Node's built-in TypeScript type stripping and `tsx`:
+     * - erasableSyntaxOnly: forbid syntax that Node cannot strip (enum, namespace, parameter properties).
+     * - verbatimModuleSyntax: type-only imports must use `import type`.
+     * - rewriteRelativeImportExtensions: write relative imports with `.ts`; tsc rewrites them to `.js` on build.
+     */
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "rewriteRelativeImportExtensions": true,
+
+    /* Type checking */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}

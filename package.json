@@ -1,0 +1,19 @@
+{
+  "name": "barbershop-booking",
+  "private": true,
+  "version": "0.1.0",
+  "description": "سیستم نوبت‌دهی آنلاین آرایشگاه",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "engines": {
+    "node": ">=26.13.1"
+  },
+  "scripts": {
+    "dev:client": "npm run dev --workspace client",
+    "dev:server": "npm run dev --workspace server",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces"
+  }
+}
