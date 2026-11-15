@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AppointmentStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum BookingSource {
+  ONLINE
+  IN_PERSON
+}
+
+model Barbershop {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(120)
+  slug      String   @unique @db.VarChar(80)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  branches Branch[]
+  admins   Admin[]
+
+  @@map("barbershops")
+}
+
+model Branch {
+  id           String   @id @default(uuid()) @db.Uuid
+  barbershopId String   @map("barbershop_id") @db.Uuid
+  name         String   @db.VarChar(120)
+  timezone     String   @default("Asia/Tehran") @db.VarChar(64)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  barbershop   Barbershop    @relation(fields: [barbershopId], references: [id], onDelete: Restrict)
+  barbers      Barber[]
+  services     Service[]
+  appointments Appointment[]
+  admins       Admin[]
+
+  @@map("branches")
+}
+
+model Barber {
+  id        String   @id @default(uuid()) @db.Uuid
+  branchId  String   @map("branch_id") @db.Uuid
+  fullName  String   @map("full_name") @db.VarChar(120)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  branch       Branch        @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  appointments Appointment[]
+
+  @@unique([id, branchId])
+  @@map("barbers")
+}
+
+model Service {
+  id              String   @id @default(uuid()) @db.Uuid
+  branchId        String   @map("branch_id") @db.Uuid
+  name            String   @db.VarChar(120)
+  durationMinutes Int      @map("duration_minutes")
+  priceToman      Int      @map("price_toman")
+  isActive        Boolean  @default(true) @map("is_active")
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  branch       Branch        @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  appointments Appointment[]
+
+  @@unique([id, branchId])
+  @@map("services")
+}
+
+model Customer {
+  id        String   @id @default(uuid()) @db.Uuid
+  fullName  String   @map("full_name") @db.VarChar(120)
+  phone     String   @unique @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  appointments Appointment[]
+
+  @@map("customers")
+}
+
+model Appointment {
+  id                      String            @id @default(uuid()) @db.Uuid
+  branchId                String            @map("branch_id") @db.Uuid
+  barberId                String            @map("barber_id") @db.Uuid
+  serviceId               String            @map("service_id") @db.Uuid
+  customerId              String            @map("customer_id") @db.Uuid
+  customerNameSnapshot    String            @map("customer_name_snapshot") @db.VarChar(120)
+  serviceNameSnapshot     String            @map("service_name_snapshot") @db.VarChar(120)
+  durationMinutesSnapshot Int               @map("duration_minutes_snapshot")
+  priceTomanSnapshot      Int               @map("price_toman_snapshot")
+  startAt                 DateTime          @map("start_at") @db.Timestamptz()
+  endAt                   DateTime          @map("end_at") @db.Timestamptz()
+  status                  AppointmentStatus @default(CONFIRMED)
+  bookingSource           BookingSource     @default(ONLINE) @map("booking_source")
+  trackingCode            String            @unique @map("tracking_code") @db.VarChar(20)
+  cancelledAt             DateTime?         @map("cancelled_at") @db.Timestamptz()
+  createdAt               DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt               DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
+
+  branch   Branch   @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  barber   Barber   @relation(fields: [barberId, branchId], references: [id, branchId], onDelete: Restrict)
+  service  Service  @relation(fields: [serviceId, branchId], references: [id, branchId], onDelete: Restrict)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([customerId, createdAt(sort: Desc)])
+  @@index([branchId, startAt])
+  @@map("appointments")
+}
+
+model Admin {
+  id           String   @id @default(uuid()) @db.Uuid
+  barbershopId String?  @map("barbershop_id") @db.Uuid
+  branchId     String?  @map("branch_id") @db.Uuid
+  username     String   @unique @db.VarChar(80)
+  passwordHash String   @map("password_hash")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  barbershop Barbershop? @relation(fields: [barbershopId], references: [id], onDelete: Restrict)
+  branch     Branch?     @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
+  @@map("admins")
+}
