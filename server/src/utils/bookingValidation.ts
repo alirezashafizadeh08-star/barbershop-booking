@@ -136,18 +136,6 @@ export const bookingRequestSchema = z
       return;
     }
 
-    // Friday check (DOW === 5)
-    const [year, month, day] = data.date.split('-').map(Number);
-    const dateObj = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-    if (dateObj.getUTCDay() === 5) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['date'],
-        message: 'آرایشگاه در روزهای جمعه تعطیل است. لطفاً روز دیگری را انتخاب کنید.',
-      });
-      return;
-    }
-
     // 2. Validate time boundaries & 30-minute intervals
     const [hours, minutes] = data.time.split(':').map(Number);
     if (minutes !== 0 && minutes !== 30) {
@@ -168,7 +156,7 @@ export const bookingRequestSchema = z
       return;
     }
 
-    // 3. Strict past-time validation for today in Asia/Tehran
+    // 3. Strict past-time validation for today in Asia/Tehran (R3)
     if (data.date === today) {
       const currentTehranTime = getTehranCurrentTime().timeString;
       if (data.time <= currentTehranTime) {
@@ -177,7 +165,20 @@ export const bookingRequestSchema = z
           path: ['time'],
           message: 'امکان انتخاب ساعت در گذشته یا زمان فعلی وجود ندارد.',
         });
+        return;
       }
+    }
+
+    // 4. Friday check (DOW === 5)
+    const [year, month, day] = data.date.split('-').map(Number);
+    const dateObj = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+    if (dateObj.getUTCDay() === 5) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['date'],
+        message: 'آرایشگاه در روزهای جمعه تعطیل است. لطفاً روز دیگری را انتخاب کنید.',
+      });
+      return;
     }
   });
 
