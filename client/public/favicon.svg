@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Dark stone rounded background -->
+  <rect width="64" height="64" rx="16" fill="#1c1917"/>
+  
+  <!-- Scissors Left Loop (Handle) -->
+  <circle cx="21" cy="46" r="8" stroke="#f5f5f4" stroke-width="3" fill="none"/>
+  
+  <!-- Scissors Right Loop (Handle) -->
+  <circle cx="43" cy="46" r="8" stroke="#f5f5f4" stroke-width="3" fill="none"/>
+  
+  <!-- Blade 1: from right handle through pivot to top-left tip -->
+  <path d="M39 40 L32 32 L19 12 C18.5 11 19.5 10 20.5 10.5 L34 29 L39 40 Z" fill="#f5f5f4"/>
+  
+  <!-- Blade 2: from left handle through pivot to top-right tip -->
+  <path d="M25 40 L32 32 L45 12 C45.5 11 44.5 10 43.5 10.5 L30 29 L25 40 Z" fill="#10b981"/>
+  
+  <!-- Pivot screw -->
+  <circle cx="32" cy="31" r="3" fill="#fafaf9" stroke="#1c1917" stroke-width="1.5"/>
+  <circle cx="32" cy="31" r="1" fill="#1c1917"/>
+  
+  <!-- Subtle comb teeth accent on bottom/right or barber comb top -->
+  <path d="M12 55 L52 55" stroke="#78716c" stroke-width="2" stroke-linecap="round"/>
+</svg>
