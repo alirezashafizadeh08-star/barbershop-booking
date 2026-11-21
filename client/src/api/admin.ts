@@ -95,12 +95,14 @@ export async function adminLogin(
 export async function fetchAdminAppointments(
   date: string,
   token: string,
+  signal?: AbortSignal,
 ): Promise<AdminAppointmentsResponse> {
   const url = date ? `/api/admin/appointments?date=${encodeURIComponent(date)}` : '/api/admin/appointments';
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    signal,
   });
 
   const body = (await response.json()) as { message?: string } & Partial<AdminAppointmentsResponse>;

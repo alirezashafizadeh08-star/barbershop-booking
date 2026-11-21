@@ -8,7 +8,7 @@ import {
   verifyPassword,
   type AuthenticatedRequest,
 } from '../utils/auth.ts';
-import { getTehranTodayDate } from '../utils/bookingValidation.ts';
+import { getTehranTodayDate, isValidCalendarDate } from '../utils/bookingValidation.ts';
 
 export const adminRouter = Router();
 
@@ -99,9 +99,9 @@ adminRouter.get(
       dateStr = getTehranTodayDate();
     }
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    if (!isValidCalendarDate(dateStr)) {
       res.status(400).json({
-        message: 'فرمت تاریخ نامعتبر است. تاریخ باید به صورت YYYY-MM-DD باشد.',
+        message: 'فرمت یا مقدار تاریخ نامعتبر است. تاریخ باید یک تاریخ معتبر تقویمی به صورت YYYY-MM-DD باشد.',
       });
       return;
     }

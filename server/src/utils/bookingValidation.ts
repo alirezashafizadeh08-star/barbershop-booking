@@ -15,6 +15,27 @@ export function normalizeDigits(input: string): string {
 }
 
 /**
+ * Checks whether a string is a strictly valid Gregorian calendar date in YYYY-MM-DD format.
+ * Rejects impossible calendar dates such as 2026-99-99 or 2026-02-31.
+ */
+export function isValidCalendarDate(dateStr: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return false;
+  }
+  const [year, month, day] = dateStr.split('-').map(Number);
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return false;
+  }
+  const dateObj = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  return (
+    !Number.isNaN(dateObj.getTime()) &&
+    dateObj.getUTCFullYear() === year &&
+    dateObj.getUTCMonth() + 1 === month &&
+    dateObj.getUTCDate() === day
+  );
+}
+
+/**
  * Today's date in Asia/Tehran (YYYY-MM-DD).
  */
 export function getTehranTodayDate(now = new Date()): string {
@@ -28,17 +49,26 @@ export function getTehranTodayDate(now = new Date()): string {
 }
 
 /**
+ * Returns a date formatted as YYYY-MM-DD offset by `offsetDays` from today in Asia/Tehran timezone.
+ */
+export function getTehranDateWithOffset(offsetDays = 0, now = new Date()): string {
+  const todayStr = getTehranTodayDate(now);
+  if (offsetDays === 0) {
+    return todayStr;
+  }
+  const [year, month, day] = todayStr.split('-').map(Number);
+  const targetUtc = new Date(Date.UTC(year, month - 1, day + offsetDays, 12, 0, 0));
+  const y = targetUtc.getUTCFullYear();
+  const m = String(targetUtc.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(targetUtc.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
  * Max booking date in Asia/Tehran (7 days ahead by default).
  */
 export function getTehranMaxBookingDate(daysAhead = 7, now = new Date()): string {
-  const future = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Tehran',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  return formatter.format(future);
+  return getTehranDateWithOffset(daysAhead, now);
 }
 
 /**
@@ -109,7 +139,10 @@ export const bookingRequestSchema = z
         'امکان انتخاب هم‌زمان «اصلاح مو» و «اصلاح مو و ریش» وجود ندارد.',
       ),
 
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'فرمت تاریخ باید YYYY-MM-DD باشد.'),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'فرمت تاریخ باید YYYY-MM-DD باشد.')
+      .refine((val) => isValidCalendarDate(val), 'تاریخ واردشده در تقویم معتبر نیست.'),
 
     time: z.string().regex(/^([01]\d|20):[0-5]\d$/, 'ساعت نوبت نامعتبر است.'),
   })

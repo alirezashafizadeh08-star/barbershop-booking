@@ -281,9 +281,9 @@ export function BookingForm({ services, onSubmit }: BookingFormProps) {
         </div>
 
         <div className="divide-y divide-stone-200 text-sm">
-          <div className="flex justify-between py-2 text-stone-700">
-            <span className="text-stone-500">نام مشتری:</span>
-            <span className="font-semibold text-stone-900">{confirmedAppointment.customerName}</span>
+          <div className="flex justify-between items-start gap-3 py-2 text-stone-700">
+            <span className="text-stone-500 shrink-0">نام مشتری:</span>
+            <span className="font-semibold text-stone-900 break-words text-left">{confirmedAppointment.customerName}</span>
           </div>
 
           <div className="flex justify-between py-2 text-stone-700">

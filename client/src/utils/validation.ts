@@ -70,6 +70,27 @@ export function validatePhone(phone: string): string | null {
 }
 
 /**
+ * Checks whether a string is a strictly valid Gregorian calendar date in YYYY-MM-DD format.
+ * Rejects impossible calendar dates such as 2026-99-99 or 2026-02-31.
+ */
+export function isValidCalendarDate(dateStr: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return false;
+  }
+  const [year, month, day] = dateStr.split('-').map(Number);
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return false;
+  }
+  const dateObj = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  return (
+    !Number.isNaN(dateObj.getTime()) &&
+    dateObj.getUTCFullYear() === year &&
+    dateObj.getUTCMonth() + 1 === month &&
+    dateObj.getUTCDate() === day
+  );
+}
+
+/**
  * Returns today's date formatted as YYYY-MM-DD based on Asia/Tehran timezone.
  */
 export function getTehranTodayDate(now = new Date()): string {
@@ -83,17 +104,27 @@ export function getTehranTodayDate(now = new Date()): string {
 }
 
 /**
+ * Returns a date formatted as YYYY-MM-DD offset by `offsetDays` from today in Asia/Tehran timezone.
+ * Uses pure calendar arithmetic on the Asia/Tehran date without hardcoded UTC offsets.
+ */
+export function getTehranDateWithOffset(offsetDays = 0, now = new Date()): string {
+  const todayStr = getTehranTodayDate(now);
+  if (offsetDays === 0) {
+    return todayStr;
+  }
+  const [year, month, day] = todayStr.split('-').map(Number);
+  const targetUtc = new Date(Date.UTC(year, month - 1, day + offsetDays, 12, 0, 0));
+  const y = targetUtc.getUTCFullYear();
+  const m = String(targetUtc.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(targetUtc.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
  * Returns the maximum allowed booking date (by default 7 days from today) in Asia/Tehran timezone.
  */
 export function getTehranMaxBookingDate(daysAhead = 7, now = new Date()): string {
-  const future = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Tehran',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  return formatter.format(future);
+  return getTehranDateWithOffset(daysAhead, now);
 }
 
 /**
@@ -169,6 +200,10 @@ export function getAvailableTimeSlots(
 export function validateBookingDate(dateStr: string, now = new Date()): string | null {
   if (!dateStr || !dateStr.trim()) {
     return 'لطفاً تاریخ نوبت را انتخاب کنید.';
+  }
+
+  if (!isValidCalendarDate(dateStr.trim())) {
+    return 'تاریخ انتخاب‌شده معتبر نیست.';
   }
 
   const today = getTehranTodayDate(now);

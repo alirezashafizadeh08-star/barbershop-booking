@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, type FormEvent } from 'react';
 import {
   adminLogin,
   fetchAdminAppointments,
@@ -8,7 +8,11 @@ import {
   getStoredAdminUsername,
   type AdminAppointmentItem,
 } from '../api/admin.ts';
-import { getTehranTodayDate } from '../utils/validation.ts';
+import {
+  getTehranTodayDate,
+  getTehranDateWithOffset,
+  isValidCalendarDate,
+} from '../utils/validation.ts';
 
 interface AdminAppointmentsProps {
   onBackToBooking: () => void;
@@ -25,10 +29,26 @@ export function AdminAppointments({ onBackToBooking }: AdminAppointmentsProps) {
 
   // Appointments state
   const todayTehran = getTehranTodayDate();
-  const [selectedDate, setSelectedDate] = useState<string>(todayTehran);
+  const tomorrowTehran = getTehranDateWithOffset(1);
+  const dayAfterTomorrowTehran = getTehranDateWithOffset(2);
+
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlDate = params.get('date')?.trim() ?? '';
+      if (isValidCalendarDate(urlDate)) {
+        return urlDate;
+      }
+    }
+    return todayTehran;
+  });
   const [appointments, setAppointments] = useState<AdminAppointmentItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Concurrency / Race-condition protection refs
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const latestRequestIdRef = useRef<number>(0);
 
   // Cancellation modal state
   const [appointmentToCancel, setAppointmentToCancel] = useState<AdminAppointmentItem | null>(null);
@@ -36,36 +56,56 @@ export function AdminAppointments({ onBackToBooking }: AdminAppointmentsProps) {
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Load appointments when token or selectedDate changes
-  useEffect(() => {
-    if (!token) return;
+  const loadAppointments = useCallback((dateToLoad: string, authToken: string) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-    let isMounted = true;
+    const requestId = ++latestRequestIdRef.current;
     setIsLoading(true);
     setLoadError(null);
 
-    fetchAdminAppointments(selectedDate, token)
+    fetchAdminAppointments(dateToLoad, authToken, controller.signal)
       .then((res) => {
-        if (isMounted) {
-          setAppointments(res.appointments);
-          setIsLoading(false);
+        if (requestId !== latestRequestIdRef.current || controller.signal.aborted) {
+          return;
         }
+        setAppointments(res.appointments);
+        setIsLoading(false);
       })
       .catch((err: unknown) => {
-        if (isMounted) {
-          const msg = err instanceof Error ? err.message : 'خطا در بارگذاری نوبت‌ها';
-          setLoadError(msg);
-          setIsLoading(false);
-          if (msg.includes('منقضی') || msg.includes('دسترسی غیرمجاز')) {
-            setToken(null);
-          }
+        if (
+          (err instanceof DOMException && err.name === 'AbortError') ||
+          requestId !== latestRequestIdRef.current ||
+          controller.signal.aborted
+        ) {
+          return;
+        }
+        const msg = err instanceof Error ? err.message : 'خطا در بارگذاری نوبت‌ها';
+        setLoadError(msg);
+        setIsLoading(false);
+        if (msg.includes('منقضی') || msg.includes('دسترسی غیرمجاز')) {
+          setToken(null);
         }
       });
+  }, []);
+
+  // Sync URL query param with validated selectedDate and load appointments
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/admin') {
+      window.history.replaceState({}, '', `/admin?date=${selectedDate}`);
+    }
+    if (!token) return;
+    loadAppointments(selectedDate, token);
 
     return () => {
-      isMounted = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
-  }, [token, selectedDate]);
+  }, [token, selectedDate, loadAppointments]);
 
   // Handle Login
   async function handleLoginSubmit(e: FormEvent) {
@@ -119,16 +159,26 @@ export function AdminAppointments({ onBackToBooking }: AdminAppointmentsProps) {
     }
   }
 
-  // Quick date change helper
-  function changeDateOffset(offsetDays: number) {
+  // Date change helper with calendar validation and URL sync
+  function handleDateChange(newDate: string) {
     setSuccessMessage(null);
-    const now = new Date();
-    const tehranTime = new Date(now.getTime() + (3.5 * 60 + now.getTimezoneOffset()) * 60 * 1000);
-    tehranTime.setDate(tehranTime.getDate() + offsetDays);
-    const y = tehranTime.getFullYear();
-    const m = String(tehranTime.getMonth() + 1).padStart(2, '0');
-    const d = String(tehranTime.getDate()).padStart(2, '0');
-    setSelectedDate(`${y}-${m}-${d}`);
+    const validDate = isValidCalendarDate(newDate) ? newDate : todayTehran;
+    setSelectedDate(validDate);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, '', `/admin?date=${validDate}`);
+    }
+  }
+
+  // Quick date change helper based on Asia/Tehran calendar
+  function changeDateOffset(offsetDays: number) {
+    handleDateChange(getTehranDateWithOffset(offsetDays));
+  }
+
+  // Reload appointments for current selected date
+  function handleRefresh() {
+    if (!token) return;
+    setSuccessMessage(null);
+    loadAppointments(selectedDate, token);
   }
 
   // If not logged in, show Login Screen
@@ -227,7 +277,7 @@ export function AdminAppointments({ onBackToBooking }: AdminAppointmentsProps) {
       <div className="rounded-xl border border-stone-200 bg-stone-50 p-3.5 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <label className="text-xs font-bold text-stone-800">انتخاب روز:</label>
-          <div className="flex gap-1 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <button
               type="button"
               onClick={() => changeDateOffset(0)}
@@ -242,16 +292,34 @@ export function AdminAppointments({ onBackToBooking }: AdminAppointmentsProps) {
             <button
               type="button"
               onClick={() => changeDateOffset(1)}
-              className="rounded-lg bg-white px-2.5 py-1 font-medium text-stone-700 hover:bg-stone-200"
+              className={`rounded-lg px-2.5 py-1 font-medium transition ${
+                selectedDate === tomorrowTehran
+                  ? 'bg-stone-900 text-white'
+                  : 'bg-white text-stone-700 hover:bg-stone-200'
+              }`}
             >
               فردا
             </button>
             <button
               type="button"
               onClick={() => changeDateOffset(2)}
-              className="rounded-lg bg-white px-2.5 py-1 font-medium text-stone-700 hover:bg-stone-200"
+              className={`rounded-lg px-2.5 py-1 font-medium transition ${
+                selectedDate === dayAfterTomorrowTehran
+                  ? 'bg-stone-900 text-white'
+                  : 'bg-white text-stone-700 hover:bg-stone-200'
+              }`}
             >
               پس‌فردا
+            </button>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="cursor-pointer rounded-lg border border-stone-300 bg-white px-2 py-1 font-medium text-stone-700 transition hover:bg-stone-100 disabled:opacity-50 flex items-center gap-1"
+              title="به‌روزرسانی نوبت‌ها"
+            >
+              <span className={isLoading ? 'animate-spin inline-block' : ''}>↻</span>
+              <span>به‌روزرسانی</span>
             </button>
           </div>
         </div>
@@ -259,10 +327,7 @@ export function AdminAppointments({ onBackToBooking }: AdminAppointmentsProps) {
         <input
           type="date"
           value={selectedDate}
-          onChange={(e) => {
-            setSelectedDate(e.target.value);
-            setSuccessMessage(null);
-          }}
+          onChange={(e) => handleDateChange(e.target.value)}
           className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 focus:border-stone-900 focus:outline-none"
         />
 
@@ -360,7 +425,7 @@ export function AdminAppointments({ onBackToBooking }: AdminAppointmentsProps) {
                   <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div>
                       <span className="text-stone-500">مشتری: </span>
-                      <span className="font-semibold text-stone-900">{appt.customerName}</span>
+                      <span className="font-semibold text-stone-900 break-words">{appt.customerName}</span>
                     </div>
                     <div>
                       <span className="text-stone-500">شماره موبایل: </span>
@@ -424,9 +489,9 @@ export function AdminAppointments({ onBackToBooking }: AdminAppointmentsProps) {
             </p>
 
             <div className="rounded-xl bg-stone-50 border border-stone-200 p-3 space-y-1.5 text-xs text-stone-700">
-              <div className="flex justify-between">
-                <span className="text-stone-500">نام مشتری:</span>
-                <span className="font-semibold text-stone-900">{appointmentToCancel.customerName}</span>
+              <div className="flex justify-between items-start gap-2">
+                <span className="text-stone-500 shrink-0">نام مشتری:</span>
+                <span className="font-semibold text-stone-900 break-words text-left">{appointmentToCancel.customerName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-stone-500">ساعت نوبت:</span>
