@@ -432,8 +432,8 @@ export function BookingForm({ services, onSubmit }: BookingFormProps) {
 
       {/* ۲. نام و نام خانوادگی */}
       <div>
-        <label htmlFor={fullNameId} className="mb-1 block text-sm font-medium text-stone-700">
-          نام و نام خانوادگی
+        <label htmlFor={fullNameId} className="mb-1.5 block text-xs sm:text-sm font-semibold text-stone-700">
+          نام و نام خانوادگی <span className="text-red-500">*</span>
         </label>
         <input
           id={fullNameId}
@@ -442,21 +442,21 @@ export function BookingForm({ services, onSubmit }: BookingFormProps) {
           value={fullName}
           onChange={(e) => handleFullNameChange(e.target.value)}
           onBlur={handleFullNameBlur}
-          className={`w-full rounded-xl border px-3.5 py-2 text-sm text-stone-800 placeholder-stone-400 transition focus:outline-none ${
+          className={`w-full rounded-xl border px-3.5 py-2.5 text-sm text-stone-900 placeholder-stone-400 transition focus:outline-none focus:ring-1 ${
             errors.fullName
-              ? 'border-red-300 bg-red-50/30 focus:border-red-500'
-              : 'border-stone-200 bg-stone-50 focus:border-stone-400 focus:bg-white'
+              ? 'border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-500/20'
+              : 'border-stone-200 bg-stone-50/80 focus:border-stone-800 focus:bg-white focus:ring-stone-800/10'
           }`}
         />
         {errors.fullName && (
-          <p className="mt-1 text-xs text-red-600">{errors.fullName}</p>
+          <p className="mt-1 text-xs text-red-600 font-medium">{errors.fullName}</p>
         )}
       </div>
 
       {/* ۳. شماره موبایل */}
       <div>
-        <label htmlFor={phoneId} className="mb-1 block text-sm font-medium text-stone-700">
-          شماره موبایل
+        <label htmlFor={phoneId} className="mb-1.5 block text-xs sm:text-sm font-semibold text-stone-700">
+          شماره موبایل <span className="text-red-500">*</span>
         </label>
         <input
           id={phoneId}
@@ -466,22 +466,22 @@ export function BookingForm({ services, onSubmit }: BookingFormProps) {
           value={phone}
           onChange={(e) => handlePhoneChange(e.target.value)}
           onBlur={handlePhoneBlur}
-          className={`w-full rounded-xl border px-3.5 py-2 text-right text-sm text-stone-800 placeholder-stone-400 transition focus:outline-none ${
+          className={`w-full rounded-xl border px-3.5 py-2.5 text-right font-mono text-sm text-stone-900 placeholder-stone-400 transition focus:outline-none focus:ring-1 ${
             errors.phone
-              ? 'border-red-300 bg-red-50/30 focus:border-red-500'
-              : 'border-stone-200 bg-stone-50 focus:border-stone-400 focus:bg-white'
+              ? 'border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-500/20'
+              : 'border-stone-200 bg-stone-50/80 focus:border-stone-800 focus:bg-white focus:ring-stone-800/10'
           }`}
         />
         {errors.phone && (
-          <p className="mt-1 text-xs text-red-600">{errors.phone}</p>
+          <p className="mt-1 text-xs text-red-600 font-medium">{errors.phone}</p>
         )}
       </div>
 
       {/* ۴. تاریخ و ساعت نوبت */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-          <label htmlFor={dateId} className="mb-1 block text-sm font-medium text-stone-700">
-            تاریخ نوبت
+          <label htmlFor={dateId} className="mb-1.5 block text-xs sm:text-sm font-semibold text-stone-700">
+            تاریخ نوبت <span className="text-red-500">*</span>
           </label>
           <input
             id={dateId}
@@ -490,23 +490,23 @@ export function BookingForm({ services, onSubmit }: BookingFormProps) {
             max={maxBookingDateTehran}
             value={date}
             onChange={(e) => handleDateChange(e.target.value)}
-            className={`w-full rounded-xl border px-3.5 py-2 text-sm text-stone-800 transition focus:outline-none ${
+            className={`w-full rounded-xl border px-3.5 py-2.5 text-sm text-stone-900 transition focus:outline-none focus:ring-1 ${
               errors.date
-                ? 'border-red-300 bg-red-50/30 focus:border-red-500'
-                : 'border-stone-200 bg-stone-50 focus:border-stone-400 focus:bg-white'
+                ? 'border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-500/20'
+                : 'border-stone-200 bg-stone-50/80 focus:border-stone-800 focus:bg-white focus:ring-stone-800/10'
             }`}
           />
           {errors.date && (
-            <p className="mt-1 text-xs text-red-600">{errors.date}</p>
+            <p className="mt-1 text-xs text-red-600 font-medium">{errors.date}</p>
           )}
           {date && !errors.date && (
-            <p className="mt-1 text-[11px] text-stone-500">{formatPersianDate(date)}</p>
+            <p className="mt-1 text-[11px] text-stone-500 font-medium">{formatPersianDate(date)}</p>
           )}
         </div>
 
         <div>
-          <label htmlFor={timeId} className="mb-1 block text-sm font-medium text-stone-700">
-            ساعت نوبت
+          <label htmlFor={timeId} className="mb-1.5 block text-xs sm:text-sm font-semibold text-stone-700">
+            ساعت نوبت <span className="text-red-500">*</span>
           </label>
           <input
             id={timeId}
@@ -518,10 +518,10 @@ export function BookingForm({ services, onSubmit }: BookingFormProps) {
             disabled={noSlotsAvailableToday}
             value={time}
             onChange={(e) => handleTimeChange(e.target.value)}
-            className={`w-full rounded-xl border px-3.5 py-2 text-sm text-stone-800 transition focus:outline-none ${
+            className={`w-full rounded-xl border px-3.5 py-2.5 text-sm text-stone-900 transition focus:outline-none focus:ring-1 ${
               errors.time
-                ? 'border-red-300 bg-red-50/30 focus:border-red-500'
-                : 'border-stone-200 bg-stone-50 focus:border-stone-400 focus:bg-white'
+                ? 'border-red-300 bg-red-50/40 focus:border-red-500 focus:ring-red-500/20'
+                : 'border-stone-200 bg-stone-50/80 focus:border-stone-800 focus:bg-white focus:ring-stone-800/10'
             } ${noSlotsAvailableToday ? 'cursor-not-allowed opacity-60' : ''}`}
           />
           <datalist id="available-time-slots">
@@ -530,10 +530,10 @@ export function BookingForm({ services, onSubmit }: BookingFormProps) {
             ))}
           </datalist>
           {errors.time && (
-            <p className="mt-1 text-xs text-red-600">{errors.time}</p>
+            <p className="mt-1 text-xs text-red-600 font-medium">{errors.time}</p>
           )}
           {noSlotsAvailableToday ? (
-            <p className="mt-1 text-xs text-amber-700">
+            <p className="mt-1 text-xs text-amber-700 font-medium">
               تمامی نوبت‌های مجاز امروز به پایان رسیده‌اند. لطفاً روز دیگری را انتخاب کنید.
             </p>
           ) : (
@@ -548,13 +548,20 @@ export function BookingForm({ services, onSubmit }: BookingFormProps) {
       <button
         type="submit"
         disabled={noSlotsAvailableToday || isSubmitting}
-        className={`w-full rounded-xl py-3 text-sm font-medium text-white transition focus:outline-none focus:ring-2 focus:ring-stone-900/20 ${
+        className={`w-full rounded-xl py-3 sm:py-3.5 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-stone-900/20 flex items-center justify-center gap-2 ${
           noSlotsAvailableToday || isSubmitting
             ? 'cursor-not-allowed bg-stone-400'
-            : 'cursor-pointer bg-stone-900 hover:bg-stone-800'
+            : 'cursor-pointer bg-stone-900 hover:bg-stone-800 active:scale-[0.99]'
         }`}
       >
-        {isSubmitting ? 'در حال ثبت نوبت…' : 'ثبت نوبت'}
+        {isSubmitting ? (
+          <>
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <span>در حال ثبت نوبت…</span>
+          </>
+        ) : (
+          'ثبت نوبت'
+        )}
       </button>
     </form>
   );
