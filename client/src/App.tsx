@@ -82,7 +82,7 @@ function App() {
                 </button>
               </div>
               <h1 className="text-xl font-bold sm:text-2xl text-stone-900 tracking-tight">
-                نوبت‌دهی آنلاین آرایشگاه
+                نوبت‌دهی آنلاین آرایشگاه مردانه
               </h1>
               <p className="mt-1 text-xs text-stone-500">
                 شنبه تا پنجشنبه، ۱۰:۰۰ تا ۲۰:۰۰ · پرداخت فقط حضوری
